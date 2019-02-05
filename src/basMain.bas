@@ -6,6 +6,8 @@ Attribute VB_Name = "basMain"
 'email service@imts.eu
 'web www.imts.eu
 '-----------------------------------------------------------------
+' Modified by : Lionel du Peloux (feb. 2019)
+'-----------------------------------------------------------------
 
 'dichiarazione oggetto crosscomm
 Public CrossCommands As New cCrossComm
@@ -37,7 +39,7 @@ End Sub
 
 Public Function Connect(ByVal nMode As Integer) As Boolean
 'effettuo la connessione con il CrossComm del robot KUKA
-'La connessione viene sempre effettuata in modalità sincrona
+'La connessione viene sempre effettuata in modalite sincrona
 'Nel corso dell'esecuzione del programma, la connessione deve essere
 'verificata ad intervalli di tempo.
 
