@@ -103,11 +103,17 @@ Public Function readMsg(ByVal nFunction As Integer, ByVal strBuffer As String, B
         Select Case nFunction
         Case 0
             'lettura variabile
-            
-            If ShowVar(sVariableName, sVariableValue) Then
+            If sVariableName = "PING" Then
+                ' PING-PONG keepalive to see if host is down
+                ' if the proxy receives a request to read "PING" it just sends back a "PONG" answer (no crosscomm call)
+                sVariableValue = "PONG"
                 sValueToWrite = Chr(nFunction) & longToWord(Len(sVariableValue)) & sVariableValue & longToWord(Len(Chr(1))) & Chr(1)
             Else
-                sValueToWrite = Chr(nFunction) & longToWord(Len(sVariableValue)) & longToWord(Len(Chr(0))) & Chr(0)
+                If ShowVar(sVariableName, sVariableValue) Then
+                    sValueToWrite = Chr(nFunction) & longToWord(Len(sVariableValue)) & sVariableValue & longToWord(Len(Chr(1))) & Chr(1)
+                Else
+                    sValueToWrite = Chr(nFunction) & longToWord(Len(sVariableValue)) & longToWord(Len(Chr(0))) & Chr(0)
+                End If
             End If
 
             sAzione = "Read: " & sVariableName & "=" & sVariableValue
