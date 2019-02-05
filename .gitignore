@@ -139,6 +139,4 @@ _NCrunch*
 
 *.3dmbak
 *.3dm.rhl
-/src/Logs
-/src/Kukavar.TestConsole
-/src/Kukavar.TestKrcApp
+*.vbw
