@@ -2,6 +2,8 @@
 
 **KukavarProxy**  is a TCP/IP server that enables reading and writing robot variables over the network.
 
+![KukavarProxy Form](https://github.com/lionpeloux/KukavarProxy/blob/dev/kukavarproxy.png)
+
 ## Credits
 
 * Developed by [IMTS](www.imts.eu) - opensource release in january 2019
