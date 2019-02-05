@@ -358,7 +358,7 @@ Private Sub sockServer_Connect(Index As Integer)
     End If
     
     'memorizzo il tempo di arrivo del messaggio
-    lLastReciveTime(Index) = GetTickCount()
+    lLastReceiveDate(Index) = Now()
     
     UpdateForm
     On Error GoTo 0
@@ -487,7 +487,7 @@ Private Sub sockServer_Read(Index As Integer, DataLength As Integer, IsUrgent As
     'Debug.Print "Lunghezza attesa: " & lLunghezzaBlocco & " lunghezza ricevuta: " & Len(strBuffer)
         
     'memorizzo il tempo di arrivo del messaggio
-    lLastReciveTime(Index) = GetTickCount()
+    lLastReceiveDate(Index) = Now()
     
     On Error GoTo 0
     Exit Sub
@@ -539,7 +539,7 @@ Public Sub DropClient(Index As Integer, Prompt As String, Optional nError As Int
     
     'Metto a zero la variabile del tempo di ricezione
     'If g_nActiveClients > 0 Then
-        lLastReciveTime(Index) = 0
+        lLastReceiveDate(Index) = Now()
     'End If
     
     UpdateForm
@@ -555,38 +555,40 @@ End Sub
 
 Private Sub tmrHost_Timer()
 
-Dim nClientIndex As Integer
+    Dim nClientIndex As Integer
+    Dim lSeconds As Long
 
-On Error GoTo errTmrHost
+    On Error GoTo errTmrHost
 
-For nClientIndex = 1 To g_nActiveClients
-    
-    'quando l'host remoto muore per via di un problema hardware/software
-    'senza chiudere la connessione, il servizio rimane nello stato di
-    '"connesso", l'unica maniera per ripristinare il collegamento è
-    'terminare e riavviare il programma.
-    'Questa condizione è normale nel tipo di comunicazione TCP. Solitamente
-    'le connessioni vengono aperte e chiuse dopo aver scambiato il dato.
-    'Per evitare che determinate connessioni restino appese, inserisco un controllo
-    'sulla ricezione delle richieste dai client.
-    'Se l'ultima richiesta dei dati è più vecchia di 60 secondi (60000 millisecondi)
-    'chiudo forzatamente la connessione. Il client dovrà riaprire
-    'la stessa per richiedere nuovamente i dati.
+    For nClientIndex = 1 To g_nActiveClients
+        'when the remote host dies due to a hardware software problem
+        'without closing the connection, the service remains in the state of
+        'connected, the only way to restore the connection is
+        'terminate and restart the program.
+        'This condition is normal in the type of TCP communication. Usually
+        'the connections are opened and closed after exchanging the data.
+        'To prevent certain connections from hanging, I enter a check
+        'on receiving requests from clients.
+        'If the last data request is older than 60 seconds (60000 milliseconds)
+        'I forcibly close the connection. The client will have to reopen
+        'the same to request the data again.
+        
+        lSeconds = DateDiff("s", lLastReceiveDate(nClientIndex), Now())
+        If lSeconds * 1000 > lTimeOutRequest Then
+            'The reception timeout has expired. Disconnect the client.
+            addMessage "Closing connection with client " & Format(nClientIndex, 0) & " (idle timeout)"
+            DropClient nClientIndex, "Error occurred for timeout #", 0
+        End If
 
-    If lLastReciveTime(nClientIndex) > 0 And (GetTickCount() - lLastReciveTime(nClientIndex)) > lTimeOutRequest Then
-        'E' scaduto il timeout di ricezione. Disconnetto il client.
-        DropClient nClientIndex, "Error occurred for timeout #", 0
-    End If
+    Next nClientIndex
 
-Next nClientIndex
-
-On Error GoTo 0
-Exit Sub
+    On Error GoTo 0
+    Exit Sub
 
 errTmrHost:
-    On Error GoTo 0
-    
-    addMessage "Errore in tmrHost"
+        On Error GoTo 0
+        
+        addMessage "Error in tmrHost"
 
 End Sub
 

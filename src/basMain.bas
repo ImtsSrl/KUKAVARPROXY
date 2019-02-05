@@ -13,14 +13,14 @@ Public CrossCommands As New cCrossComm
 'Separatore di valori per comunicazione TCP/IP
 Public Const sSeparatore = "|"
 
-Public Const lTimeOutRequest = 300000
+Public Const lTimeOutRequest = 30000
 
 Public g_nMaxClients As Integer
 Public g_nLastClient As Integer
 Public g_nActiveClients As Integer
 
 'Array che contiene il tempo di ricezione del messaggio
-Public lLastReciveTime() As Long
+Public lLastReceiveDate() As Date
 
 Public sSerialNO As String
 Public sModelName As String
@@ -267,12 +267,13 @@ g_nMaxClients = 10
 g_nLastClient = 0
 g_nActiveClients = 0
 
-ReDim lLastReciveTime(g_nMaxClients)
+ReDim lLastReceiveDate(g_nMaxClients)
 
 'Visualizzazione finestra IMSCROSSCOMM
 
 frmMain.Caption = "KukavarProxy " & App.Major & "." & App.Minor & "." & App.Revision & " | " & GetOSVersion(OSType)
 
+Load frmMain
 frmMain.Show
 
 UpdateForm
