@@ -8,7 +8,7 @@ Attribute VB_Name = "basMain"
 '-----------------------------------------------------------------
 
 'dichiarazione oggetto crosscomm
-Public CrossCommands As Object 'cCrossComm
+Public CrossCommands As New cCrossComm
 
 'Separatore di valori per comunicazione TCP/IP
 Public Const sSeparatore = "|"
@@ -247,17 +247,6 @@ End Function
 Public Sub Main()
 
 Dim OSType As WindowsVersion
-frmMain.lstAzione.AddItem GetOSVersion(OSType)
-
-'set oggetto CrossComm
-If OSType = WIN_XP Or OSType = WIN_7 Then
-    CrossCommands = CreateObject("Cross3Krc.CIE")
-    
-    Set CrossCommands = New cCrossComm
-End If
-
-'chiamo la connessione al CrossComm del Robot
-Connect 0
 
 'Prepare our listening socket
 frmMain.sockServer(0).AddressFamily = AF_INET
