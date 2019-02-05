@@ -266,7 +266,7 @@ ReDim lLastReciveTime(g_nMaxClients)
 
 'Visualizzazione finestra IMSCROSSCOMM
 
-frmMain.Caption = "KUKAVARPROXY " & App.Major & "." & App.Minor & "." & App.Revision
+frmMain.Caption = "KukavarProxy " & App.Major & "." & App.Minor & "." & App.Revision & " | " & GetOSVersion(OSType)
 
 frmMain.Show
 
