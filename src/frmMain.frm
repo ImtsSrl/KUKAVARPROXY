@@ -470,8 +470,9 @@ Private Sub sockServer_Read(Index As Integer, DataLength As Integer, IsUrgent As
         End If
         
         strBuffer = Right(strBuffer, Len(strBuffer) - (lLunghezzaBlocco + 4))
-        If Len(strBuffer) > 2 Then
+        If Len(strBuffer) > 3 Then
             lMsgID = CLng(Asc(Mid(strBuffer, 1, 1))) * &H100 + Asc(Mid(strBuffer, 2, 1))
+            sMsgID = Mid(strBuffer, 1, 2)
             lLunghezzaBlocco = Asc(Mid(strBuffer, 3, 1)) * &H100 + Asc(Mid(strBuffer, 4, 1))
             
             'If frmMain.chkDebug.Value = 1 Then
