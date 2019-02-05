@@ -52,7 +52,6 @@ On Error GoTo Fehler
     If Not CrossCommands.CrossIsConnected Then
         If CrossCommands.Init(frmMain) Then
             Connect = CrossCommands.ConnectToCross("KUKAVARPROXY", nMode)
-            
             ShowVar "$KR_SERIALNO", sSerialNO
             ShowVar "$MODEL_NAME[]", sModelName
             
@@ -110,8 +109,8 @@ Public Function readMsg(ByVal nFunction As Integer, ByVal strBuffer As String, B
             Else
                 sValueToWrite = Chr(nFunction) & longToWord(Len(sVariableValue)) & longToWord(Len(Chr(0))) & Chr(0)
             End If
-            
-            sAzione = "Lettura: " & sVariableName & "=" & sVariableValue
+
+            sAzione = "Read: " & sVariableName & "=" & sVariableValue
             
         Case 1
             'scrittura variabile
@@ -124,7 +123,7 @@ Public Function readMsg(ByVal nFunction As Integer, ByVal strBuffer As String, B
                 sValueToWrite = Chr(nFunction) & longToWord(Len(sVariableValue)) & sVariableValue & longToWord(Len(Chr(0))) & Chr(0)
             End If
             
-            sAzione = "Scrittura: " & sVariableName & "=" & sVariableValue
+            sAzione = "Write: " & sVariableName & "=" & sVariableValue
             
         Case 2
             'lettura e formattazione di una variabile array destinata al PLC
@@ -148,7 +147,7 @@ Public Function readMsg(ByVal nFunction As Integer, ByVal strBuffer As String, B
                 sValueToWrite = Chr(nFunction) & longToWord(Len(sMsg)) & sMsg & longToWord(Len(Chr(0))) & Chr(0)
             End If
             
-            sAzione = "Lettura array: " & sVariableName & "=" & sVariableValue
+            sAzione = "Read array: " & sVariableName & "=" & sVariableValue
             
         Case 3
             'scrittura di una variabile array destinata al PLC
@@ -182,7 +181,7 @@ Public Function readMsg(ByVal nFunction As Integer, ByVal strBuffer As String, B
                 sValueToWrite = Chr(nFunction) & longToWord(Len(sMsg)) & sMsg & longToWord(Len(Chr(0))) & Chr(0)
             End If
 
-            sAzione = "Scrittura array: " & sVariableName & "=" & sVariableValue
+            sAzione = "Write array: " & sVariableName & "=" & sVariableValue
             
         End Select
         
@@ -282,13 +281,14 @@ Public Sub UpdateForm()
     On Error GoTo errUpdateForm
 
     If frmMain.sockServer(0).Listening Then
-        sStato = "Ascolto"
+        sStato = "Listening..."
     Else
-        sStato = "Non Connesso"
+        sStato = "Disconnected"
     End If
     
-    frmMain.lblStato.Caption = "Stato: " & sStato
-    frmMain.lblConnessioni.Caption = "Client connessi: " & g_nActiveClients
+    frmMain.lblStato.Caption = "State: " & sStato
+    frmMain.lblConnessioni.Caption = "Clients: " & g_nActiveClients & "/" & g_nMaxClients
+    frmMain.lblTimeout.Caption = "IDLE Timeout : " & lTimeOutRequest / 1000 & " s"
     
     On Error GoTo 0
     Exit Sub
@@ -296,7 +296,7 @@ Public Sub UpdateForm()
 errUpdateForm:
     On Error GoTo 0
     
-    addMessage "Errore in UpdateForm"
+    addMessage "Error in UpdateForm"
 
 End Sub
 Public Function SetVar(ByVal sVariableName As String, ByVal sVariableValue As String) As Boolean
@@ -313,7 +313,7 @@ Public Function SetVar(ByVal sVariableName As String, ByVal sVariableValue As St
 errSetVar:
     On Error GoTo 0
     
-    addMessage "Errore in SetVar"
+    addMessage "Error in SetVar"
     
 End Function
 
@@ -342,7 +342,7 @@ Exit Function
 errShowVar:
     On Error GoTo 0
     
-    addMessage "Errore in ShowVar"
+    addMessage "Error in ShowVar"
     
 End Function
 
@@ -376,7 +376,7 @@ Public Function ExtractVariableValue(ByVal VarString As String)
 errExtractVariable:
     On Error GoTo 0
     
-    addMessage "Errore in ExtractVariableValue"
+    addMessage "Error in ExtractVariableValue"
     
 End Function
 
