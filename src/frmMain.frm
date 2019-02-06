@@ -1,22 +1,20 @@
 VERSION 5.00
 Object = "{33101C00-75C3-11CF-A8A0-444553540000}#1.0#0"; "cswsk32.ocx"
 Begin VB.Form frmMain 
-   BorderStyle     =   1  'Fixed Single
    Caption         =   "IMSCROSSCOMM V3.0"
-   ClientHeight    =   2265
-   ClientLeft      =   45
-   ClientTop       =   435
-   ClientWidth     =   4590
+   ClientHeight    =   3585
+   ClientLeft      =   270
+   ClientTop       =   660
+   ClientWidth     =   5265
    Icon            =   "frmMain.frx":0000
    LinkTopic       =   "Form1"
    MaxButton       =   0   'False
-   MinButton       =   0   'False
-   ScaleHeight     =   2265
-   ScaleWidth      =   4590
-   StartUpPosition =   3  'Windows Default
-   Begin SocketWrenchCtrl.Socket sckReceiveBroadcast 
-      Left            =   240
-      Top             =   2760
+   ScaleHeight     =   3585
+   ScaleWidth      =   5265
+   StartUpPosition =   1  'CenterOwner
+   Begin SocketWrenchCtrl.Socket sckSend 
+      Left            =   2160
+      Top             =   3120
       _Version        =   65536
       _ExtentX        =   741
       _ExtentY        =   741
@@ -48,8 +46,8 @@ Begin VB.Form frmMain
    End
    Begin SocketWrenchCtrl.Socket sockServer 
       Index           =   0
-      Left            =   3960
-      Top             =   240
+      Left            =   3360
+      Top             =   3120
       _Version        =   65536
       _ExtentX        =   741
       _ExtentY        =   741
@@ -79,9 +77,9 @@ Begin VB.Form frmMain
       Type            =   1
       Urgent          =   0   'False
    End
-   Begin SocketWrenchCtrl.Socket sckSend 
-      Left            =   840
-      Top             =   2760
+   Begin SocketWrenchCtrl.Socket sckReceiveBroadcast 
+      Left            =   1560
+      Top             =   3120
       _Version        =   65536
       _ExtentX        =   741
       _ExtentY        =   741
@@ -113,25 +111,44 @@ Begin VB.Form frmMain
    End
    Begin VB.CheckBox chkDebug 
       Caption         =   "Debug"
-      Height          =   330
-      Left            =   105
+      Height          =   250
+      Left            =   120
       TabIndex        =   3
-      Top             =   1785
-      Width           =   4320
+      Top             =   3240
+      Width           =   1200
    End
    Begin VB.ListBox lstAzione 
-      Height          =   840
+      Height          =   2205
       Left            =   120
       TabIndex        =   1
       Top             =   840
-      Width           =   4335
+      Width           =   4995
    End
    Begin VB.Timer tmrHost 
       Interval        =   1000
-      Left            =   3480
-      Top             =   240
+      Left            =   2760
+      Top             =   3120
+   End
+   Begin VB.Label lblTimeout 
+      Caption         =   "IDLE Timeout :"
+      BeginProperty Font 
+         Name            =   "MS Sans Serif"
+         Size            =   9.75
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      Height          =   255
+      Left            =   2880
+      TabIndex        =   4
+      ToolTipText     =   "If a client is idle, the connection will be shutdown after the timeout has expired"
+      Top             =   480
+      Width           =   2175
    End
    Begin VB.Label lblConnessioni 
+      Caption         =   "Client Connected :"
       BeginProperty Font 
          Name            =   "MS Sans Serif"
          Size            =   9.75
@@ -145,9 +162,10 @@ Begin VB.Form frmMain
       Left            =   120
       TabIndex        =   2
       Top             =   480
-      Width           =   3135
+      Width           =   2655
    End
    Begin VB.Label lblStato 
+      Caption         =   "State :"
       BeginProperty Font 
          Name            =   "MS Sans Serif"
          Size            =   9.75
@@ -161,7 +179,7 @@ Begin VB.Form frmMain
       Left            =   120
       TabIndex        =   0
       Top             =   120
-      Width           =   3135
+      Width           =   2655
    End
 End
 Attribute VB_Name = "frmMain"
@@ -170,10 +188,8 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 
-
-
 Private Sub Form_Load()
-    
+
     'ascolto messaggio di broadcast
     sckReceiveBroadcast.AddressFamily = AF_INET
     sckReceiveBroadcast.Binary = True
@@ -205,21 +221,46 @@ Private Sub Form_QueryUnload(Cancel As Integer, UnloadMode As Integer)
     End
 End Sub
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Private Sub Form_Resize()
+    Dim width As Integer
+    Dim minWidth As Integer
+    Dim maxWidth As Integer
+    Dim height As Integer
+    Dim minHeight As Integer
+    Dim maxHeight As Integer
+    Dim wState As Integer
+    
+    If Me.WindowState = 0 Then
+        minWidth = 5500
+        
+        maxWidth = 15000
+        
+        minHeight = 4100
+        maxHeight = 8000
+        
+        width = Me.width
+        If width < minWidth Then
+            width = minWidth
+        End If
+        If width > maxWidth Then
+            width = maxWidth
+        End If
+        
+        height = Me.height
+        If height < minHeight Then
+            height = minHeight
+        End If
+        If height > maxHeight Then
+            height = maxHeight
+        End If
+        
+        Me.width = width
+        Me.height = height
+        lstAzione.width = width - 400
+        lstAzione.height = Me.height - 1600
+        chkDebug.Top = Me.height - chkDebug.height - 500
+    End If
+End Sub
 
 Private Sub sckReceiveBroadcast_Read(DataLength As Integer, IsUrgent As Integer)
     Dim strMess As String
@@ -260,12 +301,9 @@ Private Sub sckReceiveBroadcast_Read(DataLength As Integer, IsUrgent As Integer)
 errReadBroadcast:
     On Error GoTo 0
     
-    addMessage "Errore in ReadBroadcast"
+    addMessage "Error in ReadBroadcast"
     
 End Sub
-
-
-
 
 Private Sub sockServer_Accept(Index As Integer, SocketId As Integer)
     Dim nClient As Integer
@@ -295,7 +333,7 @@ Private Sub sockServer_Accept(Index As Integer, SocketId As Integer)
 errAccept:
     On Error GoTo 0
     
-    addMessage "Errore in Accept"
+    addMessage "Error in Accept"
     
 End Sub
 
@@ -310,9 +348,9 @@ Private Sub sockServer_Connect(Index As Integer)
     If g_nActiveClients < g_nMaxClients Then
         g_nActiveClients = g_nActiveClients + 1
         'LogMsg ("Connected on Index " & Index & ", Active Clients: " & g_nActiveClients)
-'        Debug.Print "Connected on Index: " & Index
-'        Debug.Print "Active Clients Currently: " & g_nActiveClients
-'        Debug.Print
+    '        Debug.Print "Connected on Index: " & Index
+    '        Debug.Print "Active Clients Currently: " & g_nActiveClients
+    '        Debug.Print
     Else
         'LogMsg ("Maximum number of clients exceeded, dropping #" & Index)
         sockServer(Index).Disconnect
@@ -320,7 +358,7 @@ Private Sub sockServer_Connect(Index As Integer)
     End If
     
     'memorizzo il tempo di arrivo del messaggio
-    lLastReciveTime(Index) = GetTickCount()
+    lLastReceiveDate(Index) = Now()
     
     UpdateForm
     On Error GoTo 0
@@ -329,7 +367,7 @@ Private Sub sockServer_Connect(Index As Integer)
 errConnect:
     On Error GoTo 0
     
-    addMessage "errore in Connect"
+    addMessage "Error in Connect"
     
 End Sub
 
@@ -409,16 +447,16 @@ Private Sub sockServer_Read(Index As Integer, DataLength As Integer, IsUrgent As
             
                 lLunghezzaBloccoToWrite = Len(sValueToWrite)
                 sValueToWrite = sMsgID & longToWord(lLunghezzaBloccoToWrite) & sValueToWrite
-'                For a = 1 To Len(sValueToWrite)
-'                    Debug.Print "Carattere (" & a - 1 & ")= " & Asc(Mid(sValueToWrite, a, 1))
-'                Next a
+    '                For a = 1 To Len(sValueToWrite)
+    '                    Debug.Print "Carattere (" & a - 1 & ")= " & Asc(Mid(sValueToWrite, a, 1))
+    '                Next a
                 
                 If frmMain.sockServer(Index).Write(sValueToWrite, Len(sValueToWrite)) < 0 Then
                     DropClient Index, "Error occurred durring the read event: Error #", sockServer(Index).LastError
                 End If
                 
                 If frmMain.chkDebug.Value = 1 Then
-                    addMessage "ID=" & lMsgID & " " & sAzione
+                    addMessage "ID=" & Format(lMsgID, "00000") & " " & sAzione
                 End If
             
             End If
@@ -427,20 +465,21 @@ Private Sub sockServer_Read(Index As Integer, DataLength As Integer, IsUrgent As
             
         Else
         
-            addMessage "!!Lettura pendente!!"
+            addMessage "!!Reading pending!!"
         
         End If
         
         strBuffer = Right(strBuffer, Len(strBuffer) - (lLunghezzaBlocco + 4))
-        If Len(strBuffer) > 2 Then
+        If Len(strBuffer) > 3 Then
             lMsgID = CLng(Asc(Mid(strBuffer, 1, 1))) * &H100 + Asc(Mid(strBuffer, 2, 1))
+            sMsgID = Mid(strBuffer, 1, 2)
             lLunghezzaBlocco = Asc(Mid(strBuffer, 3, 1)) * &H100 + Asc(Mid(strBuffer, 4, 1))
             
-            If frmMain.chkDebug.Value = 1 Then
-                addMessage "Split msg: " & nMsg & " ID=" & lMsgID & " " & sAzione
-            End If
+            'If frmMain.chkDebug.Value = 1 Then
+            '    addMessage "Split msg: " & nMsg & " ID=" & lMsgID & " " & sAzione
+            'End If
             
-            Debug.Print "Msg separato numero " & nMsg & ": " & strMsg
+            Debug.Print "Split msg number " & nMsg & ": " & strMsg
         End If
         
     Wend
@@ -448,7 +487,7 @@ Private Sub sockServer_Read(Index As Integer, DataLength As Integer, IsUrgent As
     'Debug.Print "Lunghezza attesa: " & lLunghezzaBlocco & " lunghezza ricevuta: " & Len(strBuffer)
         
     'memorizzo il tempo di arrivo del messaggio
-    lLastReciveTime(Index) = GetTickCount()
+    lLastReceiveDate(Index) = Now()
     
     On Error GoTo 0
     Exit Sub
@@ -456,7 +495,7 @@ Private Sub sockServer_Read(Index As Integer, DataLength As Integer, IsUrgent As
 errRead:
     On Error GoTo 0
     
-    addMessage "Errore in Read"
+    addMessage "Error in Read"
     addMessage "Msg ID " & lMsgID
     addMessage "Msg Len " & lLunghezzaBlocco
     addMessage "Buffer Len " & Len(strBuffer)
@@ -465,7 +504,6 @@ errRead:
     bReadPending = False
     
 End Sub
-
 
 Public Sub DropClient(Index As Integer, Prompt As String, Optional nError As Integer)
     Dim strDisconnect As String
@@ -490,10 +528,10 @@ Public Sub DropClient(Index As Integer, Prompt As String, Optional nError As Int
         'LogMsg (strDisconnect)
     End If
     
-'    Debug.Print "Disconected on Index: " & Index
-'    Debug.Print "Active Clients Currently: " & g_nActiveClients
-'    Debug.Print "Location: " & Prompt
-'    Debug.Print
+    '    Debug.Print "Disconected on Index: " & Index
+    '    Debug.Print "Active Clients Currently: " & g_nActiveClients
+    '    Debug.Print "Location: " & Prompt
+    '    Debug.Print
     
     If (g_nActiveClients < 0) Then
         'LogMsg ("***************** Active Clients < 0 **************")
@@ -501,7 +539,7 @@ Public Sub DropClient(Index As Integer, Prompt As String, Optional nError As Int
     
     'Metto a zero la variabile del tempo di ricezione
     'If g_nActiveClients > 0 Then
-        lLastReciveTime(Index) = 0
+        lLastReceiveDate(Index) = Now()
     'End If
     
     UpdateForm
@@ -511,46 +549,46 @@ Public Sub DropClient(Index As Integer, Prompt As String, Optional nError As Int
 errDropClient:
     On Error GoTo 0
     
-    addMessage "Errore in ropClient"
+    addMessage "Error in ropClient"
     
 End Sub
 
-
-
 Private Sub tmrHost_Timer()
 
-Dim nClientIndex As Integer
+    Dim nClientIndex As Integer
+    Dim lSeconds As Long
 
-On Error GoTo errTmrHost
+    On Error GoTo errTmrHost
 
-For nClientIndex = 1 To g_nActiveClients
-    
-    'quando l'host remoto muore per via di un problema hardware/software
-    'senza chiudere la connessione, il servizio rimane nello stato di
-    '"connesso", l'unica maniera per ripristinare il collegamento è
-    'terminare e riavviare il programma.
-    'Questa condizione è normale nel tipo di comunicazione TCP. Solitamente
-    'le connessioni vengono aperte e chiuse dopo aver scambiato il dato.
-    'Per evitare che determinate connessioni restino appese, inserisco un controllo
-    'sulla ricezione delle richieste dai client.
-    'Se l'ultima richiesta dei dati è più vecchia di 60 secondi (60000 millisecondi)
-    'chiudo forzatamente la connessione. Il client dovrà riaprire
-    'la stessa per richiedere nuovamente i dati.
+    For nClientIndex = 1 To g_nActiveClients
+        'when the remote host dies due to a hardware software problem
+        'without closing the connection, the service remains in the state of
+        'connected, the only way to restore the connection is
+        'terminate and restart the program.
+        'This condition is normal in the type of TCP communication. Usually
+        'the connections are opened and closed after exchanging the data.
+        'To prevent certain connections from hanging, I enter a check
+        'on receiving requests from clients.
+        'If the last data request is older than 60 seconds (60000 milliseconds)
+        'I forcibly close the connection. The client will have to reopen
+        'the same to request the data again.
+        
+        lSeconds = DateDiff("s", lLastReceiveDate(nClientIndex), Now())
+        If lSeconds * 1000 > lTimeOutRequest Then
+            'The reception timeout has expired. Disconnect the client.
+            addMessage "Closing connection with client " & Format(nClientIndex, 0) & " (idle timeout)"
+            DropClient nClientIndex, "Error occurred for timeout #", 0
+        End If
 
-    If lLastReciveTime(nClientIndex) > 0 And (GetTickCount() - lLastReciveTime(nClientIndex)) > lTimeOutRequest Then
-        'E' scaduto il timeout di ricezione. Disconnetto il client.
-        DropClient nClientIndex, "Error occurred for timeout #", 0
-    End If
+    Next nClientIndex
 
-Next nClientIndex
-
-On Error GoTo 0
-Exit Sub
+    On Error GoTo 0
+    Exit Sub
 
 errTmrHost:
-    On Error GoTo 0
-    
-    addMessage "Errore in tmrHost"
+        On Error GoTo 0
+        
+        addMessage "Error in tmrHost"
 
 End Sub
 

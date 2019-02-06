@@ -1,3 +1,0 @@
-Riga 17: la classe SocketWrenchCtrl.Socket del controllo sckReceiveBroadcast non era una classe di controllo caricata.
-Riga 49: la classe SocketWrenchCtrl.Socket del controllo sockServer non era una classe di controllo caricata.
-Riga 82: la classe SocketWrenchCtrl.Socket del controllo sckSend non era una classe di controllo caricata.

@@ -6,21 +6,23 @@ Attribute VB_Name = "basMain"
 'email service@imts.eu
 'web www.imts.eu
 '-----------------------------------------------------------------
+' Modified by : Lionel du Peloux (feb. 2019)
+'-----------------------------------------------------------------
 
 'dichiarazione oggetto crosscomm
-Public CrossCommands As Object 'cCrossComm
+Public CrossCommands As New cCrossComm
 
 'Separatore di valori per comunicazione TCP/IP
 Public Const sSeparatore = "|"
 
-Public Const lTimeOutRequest = 300000
+Public Const lTimeOutRequest = 30000
 
 Public g_nMaxClients As Integer
 Public g_nLastClient As Integer
 Public g_nActiveClients As Integer
 
 'Array che contiene il tempo di ricezione del messaggio
-Public lLastReciveTime() As Long
+Public lLastReceiveDate() As Date
 
 Public sSerialNO As String
 Public sModelName As String
@@ -37,7 +39,7 @@ End Sub
 
 Public Function Connect(ByVal nMode As Integer) As Boolean
 'effettuo la connessione con il CrossComm del robot KUKA
-'La connessione viene sempre effettuata in modalità sincrona
+'La connessione viene sempre effettuata in modalite sincrona
 'Nel corso dell'esecuzione del programma, la connessione deve essere
 'verificata ad intervalli di tempo.
 
@@ -52,7 +54,6 @@ On Error GoTo Fehler
     If Not CrossCommands.CrossIsConnected Then
         If CrossCommands.Init(frmMain) Then
             Connect = CrossCommands.ConnectToCross("KUKAVARPROXY", nMode)
-            
             ShowVar "$KR_SERIALNO", sSerialNO
             ShowVar "$MODEL_NAME[]", sModelName
             
@@ -104,14 +105,20 @@ Public Function readMsg(ByVal nFunction As Integer, ByVal strBuffer As String, B
         Select Case nFunction
         Case 0
             'lettura variabile
-            
-            If ShowVar(sVariableName, sVariableValue) Then
+            If sVariableName = "PING" Then
+                ' PING-PONG keepalive to see if host is down
+                ' if the proxy receives a request to read "PING" it just sends back a "PONG" answer (no crosscomm call)
+                sVariableValue = "PONG"
                 sValueToWrite = Chr(nFunction) & longToWord(Len(sVariableValue)) & sVariableValue & longToWord(Len(Chr(1))) & Chr(1)
             Else
-                sValueToWrite = Chr(nFunction) & longToWord(Len(sVariableValue)) & longToWord(Len(Chr(0))) & Chr(0)
+                If ShowVar(sVariableName, sVariableValue) Then
+                    sValueToWrite = Chr(nFunction) & longToWord(Len(sVariableValue)) & sVariableValue & longToWord(Len(Chr(1))) & Chr(1)
+                Else
+                    sValueToWrite = Chr(nFunction) & longToWord(Len(sVariableValue)) & longToWord(Len(Chr(0))) & Chr(0)
+                End If
             End If
-            
-            sAzione = "Lettura: " & sVariableName & "=" & sVariableValue
+
+            sAzione = "Read: " & sVariableName & "=" & sVariableValue
             
         Case 1
             'scrittura variabile
@@ -124,7 +131,7 @@ Public Function readMsg(ByVal nFunction As Integer, ByVal strBuffer As String, B
                 sValueToWrite = Chr(nFunction) & longToWord(Len(sVariableValue)) & sVariableValue & longToWord(Len(Chr(0))) & Chr(0)
             End If
             
-            sAzione = "Scrittura: " & sVariableName & "=" & sVariableValue
+            sAzione = "Write: " & sVariableName & "=" & sVariableValue
             
         Case 2
             'lettura e formattazione di una variabile array destinata al PLC
@@ -148,7 +155,7 @@ Public Function readMsg(ByVal nFunction As Integer, ByVal strBuffer As String, B
                 sValueToWrite = Chr(nFunction) & longToWord(Len(sMsg)) & sMsg & longToWord(Len(Chr(0))) & Chr(0)
             End If
             
-            sAzione = "Lettura array: " & sVariableName & "=" & sVariableValue
+            sAzione = "Read array: " & sVariableName & "=" & sVariableValue
             
         Case 3
             'scrittura di una variabile array destinata al PLC
@@ -182,7 +189,7 @@ Public Function readMsg(ByVal nFunction As Integer, ByVal strBuffer As String, B
                 sValueToWrite = Chr(nFunction) & longToWord(Len(sMsg)) & sMsg & longToWord(Len(Chr(0))) & Chr(0)
             End If
 
-            sAzione = "Scrittura array: " & sVariableName & "=" & sVariableValue
+            sAzione = "Write array: " & sVariableName & "=" & sVariableValue
             
         End Select
         
@@ -247,17 +254,6 @@ End Function
 Public Sub Main()
 
 Dim OSType As WindowsVersion
-frmMain.lstAzione.AddItem GetOSVersion(OSType)
-
-'set oggetto CrossComm
-If OSType = WIN_XP Or OSType = WIN_7 Then
-    CrossCommands = CreateObject("Cross3Krc.CIE")
-    
-    Set CrossCommands = New cCrossComm
-End If
-
-'chiamo la connessione al CrossComm del Robot
-Connect 0
 
 'Prepare our listening socket
 frmMain.sockServer(0).AddressFamily = AF_INET
@@ -273,12 +269,13 @@ g_nMaxClients = 10
 g_nLastClient = 0
 g_nActiveClients = 0
 
-ReDim lLastReciveTime(g_nMaxClients)
+ReDim lLastReceiveDate(g_nMaxClients)
 
 'Visualizzazione finestra IMSCROSSCOMM
 
-frmMain.Caption = "KUKAVARPROXY " & App.Major & "." & App.Minor & "." & App.Revision
+frmMain.Caption = "KukavarProxy " & App.Major & "." & App.Minor & "." & App.Revision & " | " & GetOSVersion(OSType)
 
+Load frmMain
 frmMain.Show
 
 UpdateForm
@@ -293,13 +290,14 @@ Public Sub UpdateForm()
     On Error GoTo errUpdateForm
 
     If frmMain.sockServer(0).Listening Then
-        sStato = "Ascolto"
+        sStato = "Listening..."
     Else
-        sStato = "Non Connesso"
+        sStato = "Disconnected"
     End If
     
-    frmMain.lblStato.Caption = "Stato: " & sStato
-    frmMain.lblConnessioni.Caption = "Client connessi: " & g_nActiveClients
+    frmMain.lblStato.Caption = "State: " & sStato
+    frmMain.lblConnessioni.Caption = "Clients: " & g_nActiveClients & "/" & g_nMaxClients
+    frmMain.lblTimeout.Caption = "IDLE Timeout : " & lTimeOutRequest / 1000 & " s"
     
     On Error GoTo 0
     Exit Sub
@@ -307,7 +305,7 @@ Public Sub UpdateForm()
 errUpdateForm:
     On Error GoTo 0
     
-    addMessage "Errore in UpdateForm"
+    addMessage "Error in UpdateForm"
 
 End Sub
 Public Function SetVar(ByVal sVariableName As String, ByVal sVariableValue As String) As Boolean
@@ -324,7 +322,7 @@ Public Function SetVar(ByVal sVariableName As String, ByVal sVariableValue As St
 errSetVar:
     On Error GoTo 0
     
-    addMessage "Errore in SetVar"
+    addMessage "Error in SetVar"
     
 End Function
 
@@ -353,7 +351,7 @@ Exit Function
 errShowVar:
     On Error GoTo 0
     
-    addMessage "Errore in ShowVar"
+    addMessage "Error in ShowVar"
     
 End Function
 
@@ -387,7 +385,7 @@ Public Function ExtractVariableValue(ByVal VarString As String)
 errExtractVariable:
     On Error GoTo 0
     
-    addMessage "Errore in ExtractVariableValue"
+    addMessage "Error in ExtractVariableValue"
     
 End Function
 
